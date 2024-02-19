@@ -11,7 +11,12 @@ channel.QueueDeclare(queue: "hello",
                      autoDelete: false,
                      arguments: null);
 
-const string message = "Hello World!";
+static string GetMessage(string[] args)
+{
+    return ((args.Length > 0) ? string.Join(" ", args) : "Hello World!");
+}
+
+var message = GetMessage(args);
 
 var body = Encoding.UTF8.GetBytes(message);
 
