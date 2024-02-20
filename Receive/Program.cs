@@ -6,19 +6,12 @@ var factory = new ConnectionFactory { HostName = "localhost" };
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
-channel.QueueDeclare(queue: "hello",
-                     durable: true, // marca a fila duravel não será apagada quando o rabbitmq for reiniciado
-                     exclusive: false,
-                     autoDelete: false,
-                     arguments: null);
 
+channel.ExchangeDeclare("logs", ExchangeType.Fanout);
 
-/*
- Isso diz ao RabbitMQ para não fornecer mais de uma mensagem a um trabalhador por vez.
- Ou, em outras palavras, não envie uma nova mensagem para um trabalhador até que ele tenha processado e confirmado a anterior.
- Em vez disso, ele irá despachá-lo para o próximo trabalhador que ainda não esteja ocupado.
-*/
-channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+var queueName = channel.QueueDeclare().QueueName;
+
+channel.QueueBind(queue: queueName, exchange: "logs", routingKey: string.Empty);
 
 Console.WriteLine(" [*] Waiting for messages.");
 
@@ -30,17 +23,9 @@ consumer.Received += (model, ea) =>
 
     Console.WriteLine($" [x] Received {message}");
 
-    int dots = message.Split('.').Length - 1;
-
-    Thread.Sleep(dots * 1000);
-
-    Console.WriteLine(" [x] Done");
-
-    // here channel could also be accessed as ((EventingBasicConsumer)sender).Model
-    channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
 };
-channel.BasicConsume(queue: "hello",
-                     autoAck: false,
+channel.BasicConsume(queue: queueName,
+                     autoAck: true,
                      consumer: consumer);
 
 Console.WriteLine(" Press [enter] to exit.");
