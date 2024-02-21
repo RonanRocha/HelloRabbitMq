@@ -9,7 +9,6 @@ using var channel = connection.CreateModel();
 channel.ExchangeDeclare("logs", ExchangeType.Fanout);
 
 
-
 static string GetMessage(string[] args)
 {
     return ((args.Length > 0) ? string.Join(" ", args) : "Hello World!");
