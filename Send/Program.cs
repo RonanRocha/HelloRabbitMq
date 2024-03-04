@@ -6,21 +6,22 @@ using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
 
-channel.ExchangeDeclare("logs", ExchangeType.Fanout);
+// não pode ser do tipo fanout
+channel.ExchangeDeclare(exchange: "direct_logs", type: ExchangeType.Direct);
+
+var severity = (args.Length > 0) ? args[0] : "info";
 
 
-static string GetMessage(string[] args)
-{
-    return ((args.Length > 0) ? string.Join(" ", args) : "Hello World!");
-}
 
-var message = GetMessage(args);
+
+var message = (args.Length > 1) ? String.Join(" ", args.Skip(1).ToArray()) : "Hello World";
+
 
 var body = Encoding.UTF8.GetBytes(message);
 
 
-channel.BasicPublish(exchange: "logs",
-                     routingKey: string.Empty,
+channel.BasicPublish(exchange: "direct_logs",
+                     routingKey: severity,
                      basicProperties: null,
                      body: body);
 
